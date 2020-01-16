@@ -1,16 +1,19 @@
-import RPi.GPIO as GPIO
+import sys
 import time
 
+import RPi.GPIO as GPIO
 
 def main():
     cmd_crockwise = "cw"
     cmd_counterclockwise = "ccw"
+    cmd_centerlize = "ct"
     s_controller = ServoController()
     functions = {}
     functions[cmd_crockwise] = s_controller.rotate_clockwise
     functions[cmd_counterclockwise] = s_controller.rotate_counterclockwise
+    functions[cmd_centerlize] = s_controller.centerlize
     while True:
-        print("時計回：cw, 反時計回：ccw")
+        print("時計回：cw, 反時計回：ccw, 静止位置キャリブレーション：ct")
         cmd = input()
         try:
             functions[cmd]()
@@ -33,10 +36,21 @@ class ServoController:
         GPIO.setup(self.SERVO_SENSOR_PIN, GPIO.IN)
 
         #「GPIO4出力」でPWMインスタンスを作成する。
-        #GPIO.PWM( [ピン番号] , [周波数Hz] )
-        #SG92RはPWMサイクル:20ms(=50Hz), 制御パルス:0.5ms〜2.4ms, (=2.5%〜12%)。
+        # GPIO.PWM( [ピン番号] , [周波数Hz] )
+        # FS90RはPWMサイクル:20ms(=50Hz), 制御パルス:0.7ms〜2.3ms, (=3.5%〜11.5%)
+        # デフォルトの静止点は1.5ms, (=7.5%)
         self.servo = GPIO.PWM(self.SERVO_PWM_PIN, 50)
         self.servo.start(0)
+
+    def centerlize(self):
+        """
+        ローテーションサーボが停止するはずのデューティー比
+        """
+        self.servo.ChangeDutyCycle(7.5)
+        print("何か文字を入力するとキャリブレーションを終了します")
+        _ = input()
+        self.servo.ChangeDutyCycle(0)
+        print("[on %s] Complete %s" % (self.__getattribute__.__name__, sys._getframe().f_code.co_name))
     
     def rotate_clockwise(self):
         """
@@ -44,23 +58,18 @@ class ServoController:
         Raspberryでボタン押下をGPIOの割り込みで検出
         https://qiita.com/atmaru/items/2282445d327b0af0e6c1#%E9%85%8D%E7%B7%9A
         """
-        self.servo.start(0)
-        time.sleep(0.5)
-        self.servo.ChangeDutyCycle(5)
+        self.servo.ChangeDutyCycle(6)
         start_time = time.time()
         before_state = GPIO.input(self.SERVO_SENSOR_PIN)
         while time.time() - start_time < self.ROTATION_TIMEOUT_S:
             if GPIO.input(self.SERVO_SENSOR_PIN) == GPIO.HIGH:
                 if before_state == GPIO.LOW:
-                    print("chamged 0")
+                    print("Changed")
                     break
             else:
-                print("chamged 1")
                 before_state = GPIO.LOW 
-        self.servo.ChangeDutyCycle(7)
-        time.sleep(0.02)
-        self.servo.stop()
-        print("[on %s] Complete %s" % (self.__getattribute__.__name__, self.rotate_clockwise.__name__))
+        self.servo.ChangeDutyCycle(0)
+        print("[on %s] Complete %s" % (self.__getattribute__.__name__, sys._getframe().f_code.co_name))
     
     def rotate_counterclockwise(self):
         """
@@ -68,21 +77,18 @@ class ServoController:
         Raspberryでボタン押下をGPIOの割り込みで検出
         https://qiita.com/atmaru/items/2282445d327b0af0e6c1#%E9%85%8D%E7%B7%9A
         """
-        self.servo.start(0)
-        time.sleep(0.5)
-        self.servo.ChangeDutyCycle(7)
+        self.servo.ChangeDutyCycle(9)
         start_time = time.time()
         before_state = GPIO.input(self.SERVO_SENSOR_PIN)
         while time.time() - start_time < self.ROTATION_TIMEOUT_S:
-            time.sleep(0.01)
             if GPIO.input(self.SERVO_SENSOR_PIN) == GPIO.HIGH:
-                if before_state == GPIO.LOW: break
+                if before_state == GPIO.LOW:
+                    print("Changed")
+                    break
             else:
                 before_state = GPIO.LOW
-        self.servo.ChangeDutyCycle(5)
-        self.servo.stop()
-        time.sleep(0.02)
-        print("[on %s] Complete %s" % (self.__getattribute__.__name__, self.rotate_counterclockwise.__name__))
+        self.servo.ChangeDutyCycle(0)
+        print("[on %s] Complete %s" % (self.__getattribute__.__name__, sys._getframe().f_code.co_name))
 
     def __del__(self):
         GPIO.cleanup()
