@@ -22,11 +22,12 @@ def main():
             break
 
 class ServoController:
-    def __init__(self, servo_sensor_pin=5, servo_pwm_pin=4, rotation_timeout_s=5):
+    def __init__(self,  servo_sensor_pin=14, thumbturn_sensor_pin=15, servo_pwm_pin=18, rotation_timeout_s=5):
         """
         GPIOピン番号で指定すること
         """
         self.SERVO_SENSOR_PIN = servo_sensor_pin
+        self.THUMBTURN_SENSOR_PIN = thumbturn_sensor_pin
         self.SERVO_PWM_PIN = servo_pwm_pin
         self.ROTATION_TIMEOUT_S = rotation_timeout_s
 
@@ -34,6 +35,7 @@ class ServoController:
 
         GPIO.setup(self.SERVO_PWM_PIN, GPIO.OUT)
         GPIO.setup(self.SERVO_SENSOR_PIN, GPIO.IN)
+        GPIO.setup(self.THUMBTURN_SENSOR_PIN, GPIO.IN)
 
         #「GPIO4出力」でPWMインスタンスを作成する。
         # GPIO.PWM( [ピン番号] , [周波数Hz] )
@@ -62,12 +64,12 @@ class ServoController:
         start_time = time.time()
         before_state = GPIO.input(self.SERVO_SENSOR_PIN)
         while time.time() - start_time < self.ROTATION_TIMEOUT_S:
-            if GPIO.input(self.SERVO_SENSOR_PIN) == GPIO.HIGH:
-                if before_state == GPIO.LOW:
+            if GPIO.input(self.SERVO_SENSOR_PIN) == GPIO.LOW:
+                if before_state == GPIO.HIGH:
                     print("Changed")
                     break
             else:
-                before_state = GPIO.LOW 
+                before_state = GPIO.HIGH 
         self.servo.ChangeDutyCycle(0)
         print("[on %s] Complete %s" % (self.__getattribute__.__name__, sys._getframe().f_code.co_name))
     
@@ -81,16 +83,17 @@ class ServoController:
         start_time = time.time()
         before_state = GPIO.input(self.SERVO_SENSOR_PIN)
         while time.time() - start_time < self.ROTATION_TIMEOUT_S:
-            if GPIO.input(self.SERVO_SENSOR_PIN) == GPIO.HIGH:
-                if before_state == GPIO.LOW:
+            if GPIO.input(self.SERVO_SENSOR_PIN) == GPIO.LOW:
+                if before_state == GPIO.HIGH:
                     print("Changed")
                     break
             else:
-                before_state = GPIO.LOW
+                before_state = GPIO.HIGH
         self.servo.ChangeDutyCycle(0)
         print("[on %s] Complete %s" % (self.__getattribute__.__name__, sys._getframe().f_code.co_name))
 
     def __del__(self):
+        self.servo.stop()
         GPIO.cleanup()
         print("[on %s] Complete servo.stop() and GPIO.cleanup()" % (self.__getattribute__.__name__, ))
 
