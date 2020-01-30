@@ -2,7 +2,6 @@ import sys
 
 import RPi.GPIO as GPIO
 from servo_controller import ServoController
-from settings import DETECTION_THRESHOLD
 
 
 def main():
@@ -37,7 +36,7 @@ def main():
 
 
 class SmartLock:
-    def __init__(self,  thumbturn_sensor_pin=17):
+    def __init__(self, thumbturn_sensor_pin=17):
         self.THUMBTURN_SENSOR_PIN = thumbturn_sensor_pin
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.THUMBTURN_SENSOR_PIN, GPIO.IN)
@@ -68,9 +67,12 @@ def get_options(op):
     args = sys.argv
     is_find = False  # 当該オプションを見つけた場合はフラグを立てる
     for val in args:
-        if is_find: return val
-        if val == op: is_find = True
+        if is_find:
+            return val
+        if val == op:
+            is_find = True
     return None
+
 
 if __name__ == "__main__":
     main()

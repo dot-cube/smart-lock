@@ -38,7 +38,7 @@ class ServoController:
         GPIO.setup(self.SERVO_PWM_PIN, GPIO.OUT)
         GPIO.setup(self.SERVO_SENSOR_PIN, GPIO.IN)
 
-        #「GPIO4出力」でPWMインスタンスを作成する。
+        # 「GPIO4出力」でPWMインスタンスを作成する。
         # GPIO.PWM( [ピン番号] , [周波数Hz] )
         # FS90RはPWMサイクル:20ms(=50Hz), 制御パルス:0.7ms〜2.3ms, (=3.5%〜11.5%)
         # デフォルトの静止点は1.5ms, (=7.5%)
